@@ -10,6 +10,7 @@ import {
 import { detectBottleneck, getADSLabel } from "./utils/scoring.js";
 import CSVUpload from "./components/CSVUpload.jsx";
 import AISuggest from "./components/AISuggest.jsx";
+import About from "./components/About.jsx";
 
 // ─── SHARED UI ────────────────────────────────────────────────────────────────
 
@@ -372,6 +373,7 @@ const NAV = [
   { id: "ai", label: "AIアドバイス", icon: "✦", sub: "動的施策生成" },
   { id: "dist", label: "分布分析", icon: "◈", sub: "ブランドリスク" },
   { id: "csv", label: "データ入力", icon: "↑", sub: "CSVアップロード" },
+  { id: "about", label: "ADSについて", icon: "?", sub: "概念・使い方" },
 ];
 
 export default function App() {
@@ -475,6 +477,7 @@ export default function App() {
         {screen === "ai" && <AISuggest adsData={adsData} segment={csvData ? "CSVデータ" : segment} ltvData={ltvData} />}
         {screen === "dist" && <ScreenDistribution />}
         {screen === "csv" && <CSVUpload onDataLoaded={(data) => { setCsvData(data); setScreen("ltv"); }} />}
+        {screen === "about" && <About />}
       </div>
     </div>
   );
