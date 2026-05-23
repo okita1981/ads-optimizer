@@ -15,8 +15,8 @@ export default async function handler(req, res) {
 
 ${prompt}
 
-以下のJSON形式で返してください：
-{"diagnosis":"現状の診断（2-3文）","priority":"最優先課題（1文）","actions":[{"title":"施策1タイトル","type":"stop","detail":"詳細（2文）","kpi":"KPI"},{"title":"施策2タイトル","type":"start","detail":"詳細（2文）","kpi":"KPI"},{"title":"施策3タイトル","type":"start","detail":"詳細（2文）","kpi":"KPI"}],"warning":"注意事項（1文）"}`;
+以下のJSON形式のみで返してください（簡潔に、各フィールドは短く）：
+{"diagnosis":"診断（1文）","priority":"最優先課題（1文）","actions":[{"title":"施策1","type":"stop","detail":"詳細（1文）","kpi":"KPI"},{"title":"施策2","type":"start","detail":"詳細（1文）","kpi":"KPI"},{"title":"施策3","type":"start","detail":"詳細（1文）","kpi":"KPI"}],"warning":"注意（1文）"}`;
 
   try {
     const response = await fetch(
@@ -26,7 +26,7 @@ ${prompt}
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1000 },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
         }),
       }
     );
