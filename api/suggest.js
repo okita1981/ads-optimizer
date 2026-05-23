@@ -10,10 +10,8 @@ export default async function handler(req, res) {
 
   const { prompt } = req.body;
 
-  // システムプロンプトをユーザープロンプトに組み込む形式に変更
   const fullPrompt = `あなたはSalesforceのマーケティング戦略AIアドバイザーです。
-以下のADSスコアデータを分析し、必ずJSON形式のみで回答してください。
-説明文・マークダウン・コードブロックは一切不要です。JSONだけ返してください。
+以下のADSスコアデータを分析し、JSON形式で回答してください。
 
 ${prompt}
 
@@ -28,10 +26,7 @@ ${prompt}
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
-          generationConfig: { 
-            temperature: 0.7, 
-            maxOutputTokens: 1000,
-          },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 1000 },
         }),
       }
     );
@@ -44,13 +39,15 @@ ${prompt}
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
-    // JSONを抽出
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
+    // コードブロック内のJSONを優先抽出、なければ直接JSONを抽出
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    const jsonStr = codeBlockMatch ? codeBlockMatch[1] : text.match(/\{[\s\S]*\}/)?.[0];
+
+    if (!jsonStr) {
       return res.status(500).json({ error: 'JSON not found', raw: text });
     }
     
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = JSON.parse(jsonStr);
     return res.status(200).json(parsed);
   } catch (err) {
     return res.status(500).json({ error: err.message });
