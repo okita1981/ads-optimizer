@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import Papa from "papaparse";
-import { buildLTVFunnel, buildADSFromCSV } from "../utils/scoring.js";
+import { buildLTVFunnel, buildADSFromCSV, buildDistributionFromCSV } from "../utils/scoring.js";
 
 const SAMPLE_CSV = `customer_id,segment,branded_search,direct,converted,repurchased,is_score,ids_score,ns_score,continuation_years
 C001,エンタープライズ,1,1,1,1,72,55,68,5
@@ -44,9 +44,10 @@ export default function CSVUpload({ onDataLoaded }) {
         const rows = result.data;
         const ltv = buildLTVFunnel(rows);
         const ads = buildADSFromCSV(rows);
+        const distribution = buildDistributionFromCSV(rows);
         setPreview({ rows: rows.slice(0, 3), total: rows.length, ltv, ads });
         setStatus("success");
-        onDataLoaded({ rows, ltv, ads });
+        onDataLoaded({ rows, ltv, ads, distribution });
       },
       error: (err) => {
         setStatus("error");

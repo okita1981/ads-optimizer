@@ -80,6 +80,34 @@ export function buildADSFromCSV(rows) {
 }
 
 /**
+ * CSV データから顧客分布を生成
+ */
+export function buildDistributionFromCSV(rows) {
+  if (rows.length === 0) return null;
+
+  const buckets = [
+    { label: "コアファン",    range: "80-100", min: 80, max: 100, color: "#81C784" },
+    { label: "準ファン",      range: "60-79",  min: 60, max: 79,  color: "#4FC3F7" },
+    { label: "好意ユーザー",  range: "40-59",  min: 40, max: 59,  color: "#F5A623" },
+    { label: "利便ユーザー",  range: "20-39",  min: 20, max: 39,  color: "#FF8A65" },
+    { label: "単なる接触者",  range: "0-19",   min: 0,  max: 19,  color: "#EF5350" },
+  ];
+
+  const total = rows.length;
+  return buckets.map(b => {
+    const count = rows.filter(r => {
+      const ads = calcADS(
+        parseFloat(r.is_score) || 0,
+        parseFloat(r.ids_score) || 0,
+        parseFloat(r.ns_score) || 0
+      );
+      return ads >= b.min && ads <= b.max;
+    }).length;
+    return { ...b, count, pct: +((count / total) * 100).toFixed(1) };
+  });
+}
+
+/**
  * ボトルネック検出（最大ドロップ層を返す）
  */
 export function detectBottleneck(ltvData) {

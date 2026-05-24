@@ -290,20 +290,59 @@ function ScreenActions({ adsData }) {
 
 // ─── SCREEN D: Distribution ───────────────────────────────────────────────────
 
-function ScreenDistribution() {
+function ScreenDistribution({ distributionData, csvData }) {
+  const data = distributionData || mockDistribution;
+  const total = data.reduce((s, d) => s + d.count, 0);
+  const riskPct = data.filter(d => d.min <= 39).reduce((s, d) => s + d.pct, 0).toFixed(1);
+  const corePct = data.find(d => d.label === "コアファン")?.pct || 0;
+
+  function exportReport() {
+    const lines = [
+      "ADS Optimizer — 顧客ポートフォリオレポート",
+      `出力日時：${new Date().toLocaleString("ja-JP")}`,
+      `データ：${csvData ? `CSV（${csvData.rows.length}件）` : "モックデータ"}`,
+      "",
+      "■ ADSスコア別分布",
+      ...data.map(d => `  ${d.label}（ADS ${d.range}）：${d.pct}%（${d.count}名）`),
+      "",
+      "■ ブランドリスク判定",
+      `  コアファン比率：${corePct}%`,
+      `  広告依存リスク層（ADS 0-39）：${riskPct}%`,
+      "",
+      "■ KPI",
+      `  12ヶ月LTV（高ADS群）：¥104K（+30% vs 平均）`,
+      `  CAC/LTV比率：1:4.2（導入後予測）`,
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ADS_Report_${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+  }
   return (
     <div style={{ padding: "32px 40px" }}>
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: 11, color: "#F5A623", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>BRAND RISK</div>
-        <h2 style={{ fontSize: 26, fontWeight: 700, margin: 0, letterSpacing: "-0.02em" }}>顧客ポートフォリオ分布</h2>
-        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, marginTop: 6 }}>ブランドリスク判定 — 価格競争に巻き込まれやすい層の割合を可視化する</p>
+      <div style={{ marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <div style={{ fontSize: 11, color: "#F5A623", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>BRAND RISK</div>
+          <h2 style={{ fontSize: 26, fontWeight: 700, margin: 0, letterSpacing: "-0.02em" }}>顧客ポートフォリオ分布</h2>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, marginTop: 6 }}>ブランドリスク判定 — 価格競争に巻き込まれやすい層の割合を可視化する</p>
+        </div>
+        <button onClick={exportReport} style={{
+          padding: "9px 18px", background: "transparent",
+          border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10,
+          color: "rgba(255,255,255,0.7)", fontSize: 12, cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+        }}>
+          ↓ レポート出力
+        </button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginTop: 28 }}>
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 24 }}>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>ADSスコア別分布（全1,000名）</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>ADSスコア別分布（全{total}名）</div>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={mockDistribution} layout="vertical" margin={{ left: 0, right: 20 }}>
+            <BarChart data={data} layout="vertical" margin={{ left: 0, right: 20 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.05)" horizontal={false} />
               <XAxis type="number" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="label" width={80} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -314,7 +353,7 @@ function ScreenDistribution() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {mockDistribution.map((d) => (
+          {data.map((d) => (
             <div key={d.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: d.color, flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
@@ -337,7 +376,7 @@ function ScreenDistribution() {
           <div style={{ background: "rgba(239,83,80,0.07)", border: "1px solid rgba(239,83,80,0.25)", borderRadius: 12, padding: "14px 16px", marginTop: 6 }}>
             <div style={{ fontSize: 12, color: "#EF5350", fontWeight: 600, marginBottom: 6 }}>ブランドリスク判定</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", color: "#FF8A65" }}>25.1%</span> が広告依存・価格競争リスク層（ADS 0-39）
+              <span style={{ fontFamily: "'DM Mono', monospace", color: "#FF8A65" }}>{riskPct}%</span> が広告依存・価格競争リスク層（ADS 0-39）
             </div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 6 }}>
               Layer1・Layer2の強化を優先してください。
@@ -348,8 +387,8 @@ function ScreenDistribution() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginTop: 24 }}>
         {[
-          { label: "コアファン比率", value: "14.2%", sub: "80+ ADS", color: "#81C784" },
-          { label: "広告依存リスク層", value: "25.1%", sub: "0-39 ADS", color: "#EF5350" },
+          { label: "コアファン比率", value: `${corePct}%`, sub: "80+ ADS", color: "#81C784" },
+          { label: "広告依存リスク層", value: `${riskPct}%`, sub: "0-39 ADS", color: "#EF5350" },
           { label: "12ヶ月LTV（高ADS群）", value: "¥104K", sub: "+30% vs 平均", color: "#4FC3F7" },
           { label: "CAC/LTV比率", value: "1 : 4.2", sub: "導入後予測", color: "#F5A623" },
         ].map((k) => (
@@ -383,6 +422,7 @@ export default function App() {
 
   const ltvData = csvData?.ltv || mockLTVData[segment];
   const adsData = csvData?.ads || mockADSData[segment];
+  const distributionData = csvData?.distribution || mockDistribution;
   const { label: adsLabel, color: adsColor } = getADSLabel(adsData.total);
 
   return (
@@ -474,8 +514,8 @@ export default function App() {
         {screen === "ltv" && <ScreenLTV ltvData={ltvData} />}
         {screen === "ads" && <ScreenADS adsData={adsData} />}
         {screen === "actions" && <ScreenActions adsData={adsData} />}
-        {screen === "ai" && <AISuggest adsData={adsData} segment={csvData ? "CSVデータ" : segment} ltvData={ltvData} />}
-        {screen === "dist" && <ScreenDistribution />}
+        {screen === "ai" && <AISuggest key={segment + (csvData ? "csv" : "")} adsData={adsData} segment={csvData ? "CSVデータ" : segment} ltvData={ltvData} />}
+        {screen === "dist" && <ScreenDistribution distributionData={distributionData} csvData={csvData} />}
         {screen === "csv" && <CSVUpload onDataLoaded={(data) => { setCsvData(data); setScreen("ltv"); }} />}
         {screen === "about" && <About />}
       </div>
